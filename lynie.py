@@ -169,6 +169,7 @@ def _get_joined(body:ast.JoinedStr,raw=False):
 def _get_formattedvalue(body:ast.FormattedValue,raw=False):
     return f"{{{_get_values(body.value)}}}"
 
+#Easily get values
 get_value = {
     ast.Constant : _get_constant,
     ast.Name : _get_name,
@@ -228,10 +229,12 @@ def _assign_parse(body:ast.Assign):
     values = _get_values(body.value)
     values = values if isinstance(body.value,ast.Tuple) else [values]
     targets = body.targets
-    
+
+    #get variable names
     targets = [x for x in targets[0].elts] if isinstance(targets[0],ast.Tuple) else targets
 
     out = []
+    #Set variable
     for target,value in zip(targets,values):
         if isinstance(target,ast.Subscript):
             out.append(_update_subscript(target,value))
@@ -277,6 +280,7 @@ def _def_parse(body:ast.FunctionDef):
     base = ["__temp:=None"]
     name = body.name
     args = _get_values(body.args)
+    #Check function args and save them in `local_vars` for type checking later
     for x in body.args.args:
         if x.annotation:
             local_vars[x.arg] = eval(_get_values(x.annotation))
@@ -293,8 +297,10 @@ def _importfrom_parse(body:ast.ImportFrom):
     name = body.module
     data = [[x.name,x.asname] for x in body.names]
 
+    #Save functions in `imports` to be used if function called
     for subname,asname in data:
         if subname == "*":
+            #Get all functions from it
             for x in dir(__import__(name)):
                 if not str(x).startswith('_'):
                     imports[str(x)] = f"__import__('{name}').{x}"
