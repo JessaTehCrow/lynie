@@ -10,7 +10,8 @@ opers = {
     ast.Mult : "*",
     ast.Div : "/",
     ast.FloorDiv : "//",
-    ast.Pow : "**"
+    ast.Pow : "**",
+    ast.Mod : "%"
 }
 
 bool_opers = {
@@ -192,7 +193,7 @@ get_value = {
     ast.If : _get_if,
     ast.Return : _get_return,
     ast.JoinedStr : _get_joined,
-    ast.FormattedValue : _get_formattedvalue,
+    ast.FormattedValue : _get_formattedvalue
 }
 
 def _get_values(*types,raw=False):
