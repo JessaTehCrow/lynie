@@ -1,0 +1,34 @@
+1.0:
+	Added:
+		- Assignments
+		- Functions
+		- For loops
+		- If / Else statements
+		- f strings
+		- function calls
+		- imports
+		- lambda functions
+
+1.0.1:
+	Added:
+		- Example file	
+		- Comments
+
+1.0.2:
+	Added:
+		- Modulo operator
+
+	Changed:
+		- Example files
+
+1.0.3:
+	Added:
+		- List comprehension support
+		- Description for `parse_file` function.
+
+	Fixed:
+		- Output for constants
+		- Function argument parsing
+		- If Else output being a string instead of code
+		- Variable assign parsing
+		- Function return parsing

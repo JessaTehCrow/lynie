@@ -24,14 +24,19 @@ bool_opers = {
     ast.Is : " is ",
     ast.IsNot : " is not ",
     ast.In : " in ",
-    ast.NotIn : " not in "
+    ast.NotIn : " not in ",
+    ast.Not : " not "
 }
 
 imports = {}
+local_vars = {}
 
 # get value as a string. Uses raw to get a repr for assignments, not used if a function will use the string for something else
 def _get_constant(cons:ast.Constant,raw=False): 
-    return cons.value if raw else repr(cons.value)
+    out = cons.value if raw else repr(cons.value)
+    if isinstance(out,str):
+        out = out.replace("{","{{").replace("}","}}")
+    return out
 
 def _get_name(name:ast.Name,raw=False):
     name = name.id
@@ -83,13 +88,15 @@ def _get_dict(dict:ast.Dict,raw=False):
         out.append(f"{_get_values(i)}:{_get_values(x)}")
     return f"{{{','.join(out)}}}"
 
-def _get_list(list:ast.List,raw=False):
+def _get_list(List:ast.List,raw=False):
     #Get all values from list, and return raw
-    out = _get_values(*list.elts,raw=True)
+    out = _get_values(*List.elts,raw=True)
     if raw: return out
 
     #Get all values from list, and return repr
-    out = _get_values(*list.elts)
+    out = _get_values(*List.elts)
+    out = out if isinstance(out,list) else [out]
+
     return f"[{','.join(out)}]"
 
 def _get_binop(body:ast.BinOp,raw=False):
@@ -131,9 +138,9 @@ def _get_lambda(body:ast.Lambda,raw=False):
 
 def _get_args(body:ast.arguments,raw=False):
     #Too lazy to explain all of this. But it just gets the arguments of a function and stuff
-    normal,varg,kwarg = [[arg.arg,(arg.annotation.id if arg.annotation else None),_get_default(body.defaults,arg)] for arg in body.args],body.vararg,body.kwarg
-    if varg:normal.append(["*"+varg.arg,(varg.annotation.id if varg.annotation else None),None])
-    if kwarg: normal.append(['**'+kwarg.arg,(kwarg.annotation.id if kwarg.annotation else None),None])
+    normal,varg,kwarg = [[arg.arg,arg.annotation.id if hasattr(arg.annotation,'id') else None,_get_default(body.defaults,arg)] for arg in body.args],body.vararg,body.kwarg
+    if varg:normal.append(["*"+varg.arg,(varg.annotation.id if hasattr(varg.annotation,'id') else None),None])
+    if kwarg: normal.append(['**'+kwarg.arg,(kwarg.annotation.id if hasattr(kwarg.annotation,'id') else None),None])
     return (','.join([arg[0] + ("="+str(repr(arg[2])) if arg[2] != None else "") for arg in normal]))
 
 def _get_boolop(body:ast.BoolOp,raw=False):
@@ -156,10 +163,8 @@ def _get_expr(body:ast.Expr,raw=False):
     return _get_values(body.value)
 
 def _get_if(body:ast.If,raw=False):
-    boolop = _get_values(body.test)
-    code = _parse_body(body.body)
-    orelse = _get_values(*body.orelse) or "_:=None"
-    return f"({code}) if {boolop} else ({orelse})"
+    out = _if_parse(body)[0]
+    return out
 
 def _get_return(body:ast.Return,raw=False):
     return f"__temp:={_get_values(body.value)}"
@@ -169,6 +174,38 @@ def _get_joined(body:ast.JoinedStr,raw=False):
 
 def _get_formattedvalue(body:ast.FormattedValue,raw=False):
     return f"{{{_get_values(body.value)}}}"
+
+def _get_ifexp(body:ast.IfExp,raw=False):
+    boolop = _get_values(body.test)
+    code = _get_values(body.body)
+    orelse = _get_values(body.orelse) or "_:=None"
+    return f"({code}) if {boolop} else ({orelse})"
+
+def _get_listcomp(body:ast.ListComp,raw=False):
+    code = _get_values(body.elt)
+    comp = _get_values(*body.generators)
+
+    return f"[{code}{comp}]"
+
+def _get_assign(body:ast.Assign,raw=False):
+    return _assign_parse(body)[0]
+
+def _get_unaryop(body:ast.UnaryOp,raw=False):
+    op = bool_opers[type(body.op)]
+    code = _get_values(body.operand)
+    return f"{op}{code}"
+
+def _get_comprehension(body:ast.comprehension,raw=False):
+    iterable = _get_values(body.iter)
+    targets = _get_values(body.target)
+    ifs = _get_values(*body.ifs)
+    ifs = ' if'+''.join(ifs) if ifs else ""
+
+    return f" for {targets} in {iterable}{ifs}"
+
+def _get_for(body:ast.For,raw=False):
+    code = _for_parse(body)[0]
+    return code
 
 #Easily get values
 get_value = {
@@ -193,7 +230,13 @@ get_value = {
     ast.If : _get_if,
     ast.Return : _get_return,
     ast.JoinedStr : _get_joined,
-    ast.FormattedValue : _get_formattedvalue
+    ast.FormattedValue : _get_formattedvalue,
+    ast.IfExp : _get_ifexp,
+    ast.ListComp : _get_listcomp,
+    ast.Assign : _get_assign,
+    ast.UnaryOp : _get_unaryop,
+    ast.comprehension : _get_comprehension,
+    ast.For : _get_for
 }
 
 def _get_values(*types,raw=False):
@@ -215,7 +258,6 @@ def _get_values(*types,raw=False):
 
 ### Body handling ###
 
-local_vars = {}
 def _update_subscript(target:ast.Subscript,value):
     #Update list or dictionary
     name,slice = _get_values(target.value,target.slice)
@@ -227,8 +269,9 @@ def _update_subscript(target:ast.Subscript,value):
 def _assign_parse(body:ast.Assign):
     global local_vars
 
-    values = _get_values(body.value)
-    values = values if isinstance(body.value,ast.Tuple) else [values]
+    values = _get_values(*[x for x in body.value.elts]) if isinstance(body.value,ast.Tuple) else _get_values(body.value)
+    if not isinstance(values,list):
+        values = [values]
     targets = body.targets
 
     #get variable names
@@ -261,7 +304,8 @@ def _import_parse(body:ast.Import):
 def _if_parse(body:ast.If):
     boolop = _get_values(body.test)
     code = _parse_body(body.body)
-    orelse = _get_values(*body.orelse) or "_:=None"
+    orelse = _get_values(*body.orelse) or ["_:=None"]
+    orelse = ','.join(orelse) if isinstance(orelse,list) else orelse
 
     return [f"({code}) if {boolop} else ({orelse})"]
 
@@ -291,7 +335,8 @@ def _def_parse(body:ast.FunctionDef):
     return [f"{name}:= lambda {args}: [{','.join(base)}][-1]"]
 
 def _return_parse(body:ast.Return):
-    return [f"__temp:={_get_values(body.value)}"]
+    return_val = _get_values(body.value) if body.value else None
+    return [f"__temp:={return_val} if __temp==None else __temp"]
 
 def _importfrom_parse(body:ast.ImportFrom):
     global imports
@@ -342,7 +387,9 @@ def _parse_ast(filename): #Load AST for module
     with open(filename, "rt") as file:
         return ast.parse(file.read(), filename=filename)
 
-def parse_file(filename):
+def parse_file(filename:str) -> str:
+    "Filename is just the directory of the file. eg: 'C:/User/%username%/python/somefile.py'"
+
     parsed_ast = _parse_ast(filename)
     out = _parse_body(parsed_ast.body)
     return out

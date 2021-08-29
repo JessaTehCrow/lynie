@@ -1,6 +1,6 @@
-def round(number):
-    if number%1<0.5:
-        return number-number%1
-    return number+(1-number%1)
+def test(y):
+    if y < 1000:
+        return test(y*2)
+    return y
 
-print(round(23873.73))
+print(test(5))
