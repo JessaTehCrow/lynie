@@ -1,1 +1,1 @@
-from .lynie import parse_file
+from .lynie import parse_file,parse_string

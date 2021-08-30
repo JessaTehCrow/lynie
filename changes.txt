@@ -1,4 +1,5 @@
 1.0:
+
 	Added:
 		- Assignments
 		- Functions
@@ -10,11 +11,13 @@
 		- lambda functions
 
 1.1:
+
 	Added:
 		- Example file	
 		- Comments
 
 1.2:
+
 	Added:
 		- Modulo operator
 
@@ -22,6 +25,7 @@
 		- Example files
 
 1.3:
+
 	Added:
 		- List comprehension support
 		- Description for `parse_file` function.
@@ -43,3 +47,8 @@
 		- Made Lynie a PIP module
 		- Made changes.txt have shorter version numbers
 		- _get_args to be more readable
+
+1.4
+
+	Added:
+		- parse_string function

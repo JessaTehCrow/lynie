@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="lynie",
-    version="1.0.3.5",
+    version="1.0.4",
     author="JessaTehCrow",
     maintainer="JessaTehCrow",
     url='https://github.com/jessatehcrow/lynie',

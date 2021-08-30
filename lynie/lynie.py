@@ -407,3 +407,10 @@ def parse_file(filename:str) -> str:
     parsed_ast = _parse_ast(filename)
     out = _parse_body(parsed_ast.body,force_list=True)
     return out
+
+def parse_string(string:str) -> str:
+    "String is python code in the form of a string"
+
+    parsed = ast.parse(string)
+    out = _parse_body(parsed.body,force_list=True)
+    return out
