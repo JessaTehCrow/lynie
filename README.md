@@ -90,3 +90,53 @@ As everything in python would need to be supported, in a way that everyone can u
 Though, thankfully, my first try worked good. Good enough to have continued it to the point where it is now.
 There probably are better ways of doing this, however I'm proud enough of myself to have accomplished this to begin with. Maybe later I'll make a better version of it.
 
+### Change log
+1.0:
+
+	Added:
+		- Assignments
+		- Functions
+		- For loops
+		- If / Else statements
+		- f strings
+		- function calls
+		- imports
+		- lambda functions
+
+1.1:
+
+	Added:
+		- Example file	
+		- Comments
+
+1.2:
+
+	Added:
+		- Modulo operator
+
+	Changed:
+		- Example files
+
+1.3:
+
+	Added:
+		- List comprehension support
+		- Description for `parse_file` function.
+
+	Fixed:
+		- Output for constants
+		- Function argument parsing
+		- If Else output being a string instead of code
+		- Variable assign parsing
+		- Function return parsing
+
+1.3.5:
+
+	Added:
+		- A testing script
+		- Folder with scripts to test
+
+	Changed:
+		- Made Lynie a PIP module
+		- Made changes.txt have shorter version numbers
+		- _get_args to be more readable

@@ -1,2 +1,6 @@
 __pycache__/
-__pycache__
+build/
+dist/
+lynie.egg-info/
+build.py
+lynie/__pycache__/

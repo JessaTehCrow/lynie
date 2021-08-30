@@ -1,5 +1,6 @@
 import lynie
 
+#define input and output files
 filename = "oneline.py"
 output_file = "example_output.py"
 

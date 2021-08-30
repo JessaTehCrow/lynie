@@ -138,10 +138,20 @@ def _get_lambda(body:ast.Lambda,raw=False):
 
 def _get_args(body:ast.arguments,raw=False):
     #Too lazy to explain all of this. But it just gets the arguments of a function and stuff
-    normal,varg,kwarg = [[arg.arg,arg.annotation.id if hasattr(arg.annotation,'id') else None,_get_default(body.defaults,arg)] for arg in body.args],body.vararg,body.kwarg
-    if varg:normal.append(["*"+varg.arg,(varg.annotation.id if hasattr(varg.annotation,'id') else None),None])
-    if kwarg: normal.append(['**'+kwarg.arg,(kwarg.annotation.id if hasattr(kwarg.annotation,'id') else None),None])
-    return (','.join([arg[0] + ("="+str(repr(arg[2])) if arg[2] != None else "") for arg in normal]))
+    normal = [[arg.arg,arg.annotation.id if hasattr(arg.annotation,'id') else None, _get_default(body.defaults,arg)] for arg in body.args]
+    varg = body.vararg
+    kwarg = body.kwarg
+
+    if varg:
+        normal.append(["*"+varg.arg,(varg.annotation.id if hasattr(varg.annotation,'id') else None),None])
+    if kwarg:
+        normal.append(['**'+kwarg.arg,(kwarg.annotation.id if hasattr(kwarg.annotation,'id') else None),None])
+
+    out = []
+    for name,_,value in normal:
+        default = ("="+repr(value)) if value!=None else ""
+        out.append(f"{name}{default}")
+    return ','.join(out)
 
 def _get_boolop(body:ast.BoolOp,raw=False):
     devide_operators = {
@@ -199,13 +209,16 @@ def _get_comprehension(body:ast.comprehension,raw=False):
     iterable = _get_values(body.iter)
     targets = _get_values(body.target)
     ifs = _get_values(*body.ifs)
-    ifs = ' if'+''.join(ifs) if ifs else ""
+    ifs = ' if '+''.join(ifs) if ifs else ""
 
     return f" for {targets} in {iterable}{ifs}"
 
 def _get_for(body:ast.For,raw=False):
     code = _for_parse(body)[0]
     return code
+
+def _get_aug(body:ast.AugAssign,raw=False):
+    return _aug_parse(body)[0]
 
 #Easily get values
 get_value = {
@@ -236,7 +249,8 @@ get_value = {
     ast.Assign : _get_assign,
     ast.UnaryOp : _get_unaryop,
     ast.comprehension : _get_comprehension,
-    ast.For : _get_for
+    ast.For : _get_for,
+    ast.AugAssign : _get_aug
 }
 
 def _get_values(*types,raw=False):
@@ -261,7 +275,7 @@ def _get_values(*types,raw=False):
 def _update_subscript(target:ast.Subscript,value):
     #Update list or dictionary
     name,slice = _get_values(target.value,target.slice)
-    if local_vars[name] == list:
+    if local_vars[name] == ast.List:
         return f"{name}:=[*{name}[:{slice}],{value},*{name}[{slice}+1:]]"
     else:
         return f"{name}.update({{{slice}:{value}}})"
@@ -269,8 +283,8 @@ def _update_subscript(target:ast.Subscript,value):
 def _assign_parse(body:ast.Assign):
     global local_vars
 
-    values = _get_values(*[x for x in body.value.elts]) if isinstance(body.value,ast.Tuple) else _get_values(body.value)
-    if not isinstance(values,list):
+    values = [[_get_values(x),type(x)] for x in body.value.elts] if isinstance(body.value,ast.Tuple) else [_get_values(body.value),type(body.value)]
+    if not isinstance(values[0],list):
         values = [values]
     targets = body.targets
 
@@ -279,11 +293,11 @@ def _assign_parse(body:ast.Assign):
 
     out = []
     #Set variable
-    for target,value in zip(targets,values):
+    for target,(value,typ) in zip(targets,values):
         if isinstance(target,ast.Subscript):
             out.append(_update_subscript(target,value))
         else:
-            local_vars[_get_values(target)] = type(value)
+            local_vars[_get_values(target)] = typ
             out.append(f"{_get_values(target)}:={value}")
     return out
 
@@ -365,7 +379,7 @@ parser = {
     ast.ImportFrom : _importfrom_parse
 }
 
-def _parse_body(body):
+def _parse_body(body,force_list=False):
     raw = []
     for x in body:
         if debug: print(f"\n## {type(x).__name__} ##\n")
@@ -375,7 +389,7 @@ def _parse_body(body):
         else:
             print('\nNEW:',type(x).__name__,end='\n\n')
     out = ','.join(raw)
-    return f"[{out}]" if len(raw)-1 else f"{out}"
+    return f"[{out}]" if (len(raw)-1 or force_list) else f"{out}"
 
 ### other ###
 
@@ -391,5 +405,5 @@ def parse_file(filename:str) -> str:
     "Filename is just the directory of the file. eg: 'C:/User/%username%/python/somefile.py'"
 
     parsed_ast = _parse_ast(filename)
-    out = _parse_body(parsed_ast.body)
+    out = _parse_body(parsed_ast.body,force_list=True)
     return out
