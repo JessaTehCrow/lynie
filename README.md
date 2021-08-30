@@ -146,3 +146,8 @@ There probably are better ways of doing this, however I'm proud enough of myself
 		- Made Lynie a PIP module
 		- Made changes.txt have shorter version numbers
 		- _get_args to be more readable
+
+1.4
+
+	Added:
+		- parse_string function
