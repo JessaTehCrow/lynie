@@ -71,6 +71,12 @@ def some_func(*inp,**kwargs):
 ___
 If you have any other problems, feel free to raise an issue on this github repo.
 
+## TODO
+
+- Change the way the imports work
+- add support for while loops
+- find a way to use try/except
+
 ## What to use it for
 Honestly, i wouldn't know.
 Though, judging by the fact that you've found this Repo, you already would have some use for it.
