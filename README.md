@@ -90,7 +90,7 @@ As everything in python would need to be supported, in a way that everyone can u
 Though, thankfully, my first try worked good. Good enough to have continued it to the point where it is now.
 There probably are better ways of doing this, however I'm proud enough of myself to have accomplished this to begin with. Maybe later I'll make a better version of it.
 
-### Change log
+## Change log
 1.0:
 
 	Added:
