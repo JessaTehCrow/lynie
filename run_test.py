@@ -7,7 +7,7 @@ files = [
     "loops.py",
     "imports.py",
     "function.py",
-    "list_comp.py",
+    "comprehensions.py",
     "nested.py"
 ]
 

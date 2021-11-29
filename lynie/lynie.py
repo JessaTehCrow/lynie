@@ -220,6 +220,19 @@ def _get_for(body:ast.For,raw=False):
 def _get_aug(body:ast.AugAssign,raw=False):
     return _aug_parse(body)[0]
 
+def _get_generatorexp(body:ast.ListComp,raw=False):
+    code = _get_values(body.elt)
+    comp = _get_values(*body.generators)
+
+    return f"({code}{comp})"
+
+def _get_dict_comp(body:ast.DictComp,raw=False):
+    key = _get_values(body.key)
+    value = _get_values(body.value)
+    comp = _get_values(*body.generators)
+    
+    return f'{{{key}:{value}{comp}}}'
+
 #Easily get values
 get_value = {
     ast.Constant : _get_constant,
@@ -246,6 +259,8 @@ get_value = {
     ast.FormattedValue : _get_formattedvalue,
     ast.IfExp : _get_ifexp,
     ast.ListComp : _get_listcomp,
+    ast.GeneratorExp : _get_generatorexp,
+    ast.DictComp : _get_dict_comp,
     ast.Assign : _get_assign,
     ast.UnaryOp : _get_unaryop,
     ast.comprehension : _get_comprehension,
