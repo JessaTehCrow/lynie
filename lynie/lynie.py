@@ -1,7 +1,7 @@
 import ast
 
 #Enable this to see all the steps the program takes to get it's data
-debug = 1
+debug = 0
 
 # Data to easily fetch their string equivalent
 opers = {
