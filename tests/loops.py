@@ -5,3 +5,9 @@ for x in var1:
 
 for x in "123456":
     print(x)
+
+#While loop
+
+someval = 1
+while someval<1000:
+    someval *= 2

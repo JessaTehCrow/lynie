@@ -1,7 +1,7 @@
 import ast
 
 #Enable this to see all the steps the program takes to get it's data
-debug = 0
+debug = 1
 
 # Data to easily fetch their string equivalent
 opers = {
@@ -11,7 +11,13 @@ opers = {
     ast.Div : "/",
     ast.FloorDiv : "//",
     ast.Pow : "**",
-    ast.Mod : "%"
+    ast.Mod : "%",
+    ast.BitXor : "^",
+    ast.LShift : "<<",
+    ast.RShift : ">>",
+    ast.BitAnd : "&",
+    ast.BitOr : "|",
+
 }
 
 bool_opers = {
@@ -25,7 +31,8 @@ bool_opers = {
     ast.IsNot : " is not ",
     ast.In : " in ",
     ast.NotIn : " not in ",
-    ast.Not : " not "
+    ast.Not : " not ",
+    ast.Invert : "~"
 }
 
 imports = {}
@@ -257,7 +264,7 @@ def _get_values(*types,raw=False):
     #If debug is on print the incomming type
     if debug:
         for val in types:
-            print("NEW:" ,type(val).__name__)
+            print("NEW:" ,type(val).__name__,"(types)")
 
     out = [get_value[type(val)](val,raw) for val in types]
     #If debug is on print the outgoing type
@@ -376,7 +383,7 @@ parser = {
     ast.AugAssign : _aug_parse,
     ast.FunctionDef : _def_parse,
     ast.Return : _return_parse,
-    ast.ImportFrom : _importfrom_parse
+    ast.ImportFrom : _importfrom_parse,
 }
 
 def _parse_body(body,force_list=False):
@@ -386,7 +393,7 @@ def _parse_body(body,force_list=False):
         if type(x) in parser:
             temp = parser[type(x)](x)
             if temp: raw += temp
-        else:
+        elif debug:
             print('\nNEW:',type(x).__name__,end='\n\n')
     out = ','.join(raw)
     return f"[{out}]" if (len(raw)-1 or force_list) else f"{out}"

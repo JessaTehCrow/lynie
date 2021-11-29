@@ -8,7 +8,7 @@ files = [
     "imports.py",
     "function.py",
     "list_comp.py",
-    "nested.py"
+    "nested.py",
 ]
 
 for file in files:
